@@ -11,3 +11,9 @@ from .tank import tank_bp
 from .sensors import sensors_bp
 from .weather import weather_bp
 from .alerts import alerts_bp
+
+# We'll import only the blueprints that exist so far.
+# As we build more modules (care, harvest, financial, etc.),
+# we'll add them here.
+
+from .auth import auth_bp

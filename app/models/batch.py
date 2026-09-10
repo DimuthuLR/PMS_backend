@@ -3,31 +3,27 @@ from datetime import datetime
 
 class Batch(db.Model):
     __tablename__ = 'batches'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     plot_id = db.Column(db.Integer, db.ForeignKey('plots.id'), nullable=False)
-    crop_type = db.Column(db.String(50), nullable=False)
-    variety = db.Column(db.String(50))
-    start_date = db.Column(db.Date)
-    initial_count = db.Column(db.Integer, default=0)
-    expected_yield = db.Column(db.Float, default=0)
-    stage = db.Column(db.String(30), default='Sowing')
+    crop_type = db.Column(db.String(80), nullable=False)     # e.g., "Chili"
+    variety = db.Column(db.String(80))                        # e.g., "Bird's Eye"
+    start_date = db.Column(db.Date, nullable=False)
+    initial_count = db.Column(db.Integer, default=0)          # Number of seedlings planted
+    expected_yield = db.Column(db.Float, default=0.0)         # Expected kg
+    stage = db.Column(db.String(50), default='Sowing')        # Lifecycle stage
     notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    care_logs = db.relationship('CareLog', backref='batch', lazy=True, cascade='all, delete-orphan')
-    harvests = db.relationship('Harvest', backref='batch', lazy=True, cascade='all, delete-orphan')
-    
+
     def to_dict(self):
         return {
             'id': self.id,
-            'plotId': self.plot_id,
-            'cropType': self.crop_type,
+            'plot_id': self.plot_id,
+            'plot_name': self.plot.name if self.plot else None,
+            'crop_type': self.crop_type,
             'variety': self.variety,
-            'startDate': self.start_date.isoformat() if self.start_date else None,
-            'initialCount': self.initial_count,
-            'expectedYield': self.expected_yield,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'initial_count': self.initial_count,
+            'expected_yield': self.expected_yield,
             'stage': self.stage,
-            'notes': self.notes,
-            'createdAt': self.created_at.isoformat() if self.created_at else None
+            'notes': self.notes
         }

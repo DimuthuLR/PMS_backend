@@ -15,10 +15,12 @@ def create_app():
     # Initialize extensions with the app
     db.init_app(app)
     migrate.init_app(app, db)
-    CORS(app)  # Allows your frontend (running on localhost:5173) to call this backend
+    CORS(app)  # Allows your frontend to call this backend
 
-    # Register routes (we will add our auth routes here later)
-    from .routes import auth
+    # Register blueprints (routes)
+    from .routes import auth, plots, batches
     app.register_blueprint(auth.auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(plots.plots_bp, url_prefix='/api/plots')
+    app.register_blueprint(batches.batches_bp, url_prefix='/api/batches')
 
     return app
