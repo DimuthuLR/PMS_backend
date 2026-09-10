@@ -17,3 +17,4 @@ from .alerts import alerts_bp
 # we'll add them here.
 
 from .auth import auth_bp
+from .stubs import stubs_bp

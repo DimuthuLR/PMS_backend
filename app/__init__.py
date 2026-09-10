@@ -17,10 +17,13 @@ def create_app():
     migrate.init_app(app, db)
     CORS(app)  # Allows your frontend to call this backend
 
-    # Register blueprints (routes)
-    from .routes import auth, plots, batches
+    # ✅ Register blueprints
+    from .routes import auth, plots, batches, stubs
     app.register_blueprint(auth.auth_bp, url_prefix='/api/auth')
     app.register_blueprint(plots.plots_bp, url_prefix='/api/plots')
     app.register_blueprint(batches.batches_bp, url_prefix='/api/batches')
+
+    # ✅ Stub endpoints (to be replaced module-by-module)
+    app.register_blueprint(stubs.stubs_bp, url_prefix='/api')
 
     return app
