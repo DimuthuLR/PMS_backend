@@ -1,68 +1,94 @@
 from flask import Blueprint, request, jsonify
-from ..models import Pest, Batch
+from ..models.pest import Pest
+from ..models.batch import Batch
 from .. import db
 from ..utils.auth import token_required
+from datetime import datetime
 
 pest_bp = Blueprint('pest', __name__)
 
+def _parse_date(value):
+    if not value:
+        return None
+    return datetime.strptime(value, '%Y-%m-%d').date()
+
 @pest_bp.route('', methods=['GET'])
 @token_required
-def get_pests():
+def get_pests(current_user):
     batch_id = request.args.get('batch_id')
+    query = Pest.query
     if batch_id:
-        pests = Pest.query.filter_by(batch_id=batch_id).all()
-    else:
-        pests = Pest.query.all()
-    return jsonify([p.to_dict() for p in pests]), 200
+        query = query.filter_by(batch_id=batch_id)
+    items = query.order_by(Pest.date.desc()).all()
+    return jsonify([p.to_dict() for p in items]), 200
 
-@pest_bp.route('/<int:id>', methods=['GET'])
+@pest_bp.route('/<int:pest_id>', methods=['GET'])
 @token_required
-def get_pest(id):
-    pest = Pest.query.get(id)
-    if not pest:
-        return jsonify({'error': 'Pest record not found'}), 404
-    return jsonify(pest.to_dict()), 200
+def get_pest(current_user, pest_id):
+    item = Pest.query.get(pest_id)
+    if not item:
+        return jsonify({'message': 'Pest record not found'}), 404
+    return jsonify(item.to_dict()), 200
 
 @pest_bp.route('', methods=['POST'])
 @token_required
-def create_pest():
+def create_pest(current_user):
     data = request.get_json()
-    batch = Batch.query.get(data.get('batchId'))
-    if not batch:
-        return jsonify({'error': 'Batch not found'}), 404
-    pest = Pest(
-        batch_id=data.get('batchId'),
-        symptom=data.get('symptom'),
-        severity=data.get('severity', 3),
-        date=data.get('date'),
-        image_url=data.get('imageUrl'),
-        resolved=data.get('resolved', False)
+    if not data.get('batch_id'):
+        return jsonify({'message': 'batch_id is required'}), 400
+    if not data.get('symptom'):
+        return jsonify({'message': 'symptom is required'}), 400
+    if not data.get('date'):
+        return jsonify({'message': 'date is required (YYYY-MM-DD)'}), 400
+    if not Batch.query.get(data['batch_id']):
+        return jsonify({'message': 'Batch not found'}), 404
+
+    try:
+        p_date = _parse_date(data['date'])
+    except ValueError:
+        return jsonify({'message': 'Invalid date format'}), 400
+
+    item = Pest(
+        batch_id=data['batch_id'],
+        symptom=data['symptom'],
+        severity=data.get('severity', 1),
+        date=p_date,
+        image_url=data.get('image_url'),
+        resolved=data.get('resolved', False),
     )
-    db.session.add(pest)
+    db.session.add(item)
     db.session.commit()
-    return jsonify(pest.to_dict()), 201
+    return jsonify(item.to_dict()), 201
 
-@pest_bp.route('/<int:id>', methods=['PUT'])
+@pest_bp.route('/<int:pest_id>', methods=['PUT'])
 @token_required
-def update_pest(id):
-    pest = Pest.query.get(id)
-    if not pest:
-        return jsonify({'error': 'Pest record not found'}), 404
+def update_pest(current_user, pest_id):
+    item = Pest.query.get(pest_id)
+    if not item:
+        return jsonify({'message': 'Pest record not found'}), 404
+
     data = request.get_json()
-    pest.symptom = data.get('symptom', pest.symptom)
-    pest.severity = data.get('severity', pest.severity)
-    pest.date = data.get('date', pest.date)
-    pest.image_url = data.get('imageUrl', pest.image_url)
-    pest.resolved = data.get('resolved', pest.resolved)
-    db.session.commit()
-    return jsonify(pest.to_dict()), 200
+    item.batch_id = data.get('batch_id', item.batch_id)
+    item.symptom = data.get('symptom', item.symptom)
+    item.severity = data.get('severity', item.severity)
+    item.image_url = data.get('image_url', item.image_url)
+    item.resolved = data.get('resolved', item.resolved)
 
-@pest_bp.route('/<int:id>', methods=['DELETE'])
+    if data.get('date'):
+        try:
+            item.date = _parse_date(data['date'])
+        except ValueError:
+            return jsonify({'message': 'Invalid date format'}), 400
+
+    db.session.commit()
+    return jsonify(item.to_dict()), 200
+
+@pest_bp.route('/<int:pest_id>', methods=['DELETE'])
 @token_required
-def delete_pest(id):
-    pest = Pest.query.get(id)
-    if not pest:
-        return jsonify({'error': 'Pest record not found'}), 404
-    db.session.delete(pest)
+def delete_pest(current_user, pest_id):
+    item = Pest.query.get(pest_id)
+    if not item:
+        return jsonify({'message': 'Pest record not found'}), 404
+    db.session.delete(item)
     db.session.commit()
     return jsonify({'message': 'Pest record deleted'}), 200

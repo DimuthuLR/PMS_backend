@@ -17,14 +17,18 @@ def create_app():
     CORS(app)
 
     # Register blueprints
-    from .routes import auth, plots, batches, care, harvest, stubs
+    from .routes import (auth, plots, batches, care, harvest,
+                         financial, pest, tasks, stubs)
     app.register_blueprint(auth.auth_bp, url_prefix='/api/auth')
     app.register_blueprint(plots.plots_bp, url_prefix='/api/plots')
     app.register_blueprint(batches.batches_bp, url_prefix='/api/batches')
     app.register_blueprint(care.care_bp, url_prefix='/api/care')
     app.register_blueprint(harvest.harvest_bp, url_prefix='/api/harvest')
+    app.register_blueprint(financial.financial_bp, url_prefix='/api/financial')
+    app.register_blueprint(pest.pest_bp, url_prefix='/api/pest')
+    app.register_blueprint(tasks.tasks_bp, url_prefix='/api/tasks')
 
-    # Stubs (still active for the modules we haven't built yet)
+    # Stubs (still active for: sensors, weather, tank, actuators, alerts, dashboard)
     app.register_blueprint(stubs.stubs_bp, url_prefix='/api')
 
     return app
