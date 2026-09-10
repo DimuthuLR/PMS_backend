@@ -21,12 +21,6 @@ def get_sensors(current_user):
         'last_updated': datetime.utcnow().isoformat()
     }), 200
 
-# ---------- HARVEST ----------
-@stubs_bp.route('/harvest', methods=['GET'])
-@token_required
-def get_harvest(current_user):
-    return jsonify([]), 200
-
 # ---------- ALERTS ----------
 @stubs_bp.route('/alerts', methods=['GET'])
 @token_required
@@ -64,11 +58,6 @@ def get_tank(current_user):
 def get_actuators(current_user):
     return jsonify([]), 200
 
-# ---------- CARE LOGS ----------
-@stubs_bp.route('/care', methods=['GET'])
-@token_required
-def get_care(current_user):
-    return jsonify([]), 200
 
 # ---------- FINANCIAL ----------
 @stubs_bp.route('/financial', methods=['GET'])
