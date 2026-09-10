@@ -50,3 +50,12 @@ def admin_required(f):
             return jsonify({'message': 'Admin privileges required!'}), 403
         return f(current_user, *args, **kwargs)
     return decorated
+
+def manager_required(f):
+    """Decorator to restrict access to admin or manager users only"""
+    @wraps(f)
+    def decorated(current_user, *args, **kwargs):
+        if current_user.role not in ['admin', 'manager']:
+            return jsonify({'message': 'Manager or Admin privileges required!'}), 403
+        return f(current_user, *args, **kwargs)
+    return decorated
