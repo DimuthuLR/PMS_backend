@@ -10,4 +10,5 @@ from .actuators import actuators_bp
 from .tank import tank_bp
 from .sensors import sensors_bp
 from .weather import weather_bp
-from .stubs import stubs_bp
+from .alerts import alerts_bp
+from .dashboard import dashboard_bp

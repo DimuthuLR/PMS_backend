@@ -10,3 +10,4 @@ from .actuator import Actuator
 from .tank import Tank
 from .sensor import Sensor
 from .weather import Weather
+from .alert import Alert

@@ -16,10 +16,10 @@ def create_app():
     migrate.init_app(app, db)
     CORS(app)
 
-    # Register blueprints
     from .routes import (auth, plots, batches, care, harvest,
                          financial, pest, tasks,
-                         actuators, tank, sensors, weather, stubs)
+                         actuators, tank, sensors, weather,
+                         alerts, dashboard)
 
     app.register_blueprint(auth.auth_bp, url_prefix='/api/auth')
     app.register_blueprint(plots.plots_bp, url_prefix='/api/plots')
@@ -33,8 +33,7 @@ def create_app():
     app.register_blueprint(tank.tank_bp, url_prefix='/api/tank')
     app.register_blueprint(sensors.sensors_bp, url_prefix='/api/sensors')
     app.register_blueprint(weather.weather_bp, url_prefix='/api/weather')
-
-    # Stubs — only /alerts and /dashboard remain
-    app.register_blueprint(stubs.stubs_bp, url_prefix='/api')
+    app.register_blueprint(alerts.alerts_bp, url_prefix='/api/alerts')
+    app.register_blueprint(dashboard.dashboard_bp, url_prefix='/api/dashboard')
 
     return app
