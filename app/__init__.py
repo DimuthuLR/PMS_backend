@@ -4,7 +4,7 @@ from flask_migrate import Migrate
 from flask_cors import CORS
 from .config import Config
 
-# Initialize extensions (these will be used in models and routes)
+# Initialize extensions
 db = SQLAlchemy()
 migrate = Migrate()
 
@@ -18,7 +18,9 @@ def create_app():
 
     # Register blueprints
     from .routes import (auth, plots, batches, care, harvest,
-                         financial, pest, tasks, stubs)
+                         financial, pest, tasks,
+                         actuators, tank, sensors, weather, stubs)
+
     app.register_blueprint(auth.auth_bp, url_prefix='/api/auth')
     app.register_blueprint(plots.plots_bp, url_prefix='/api/plots')
     app.register_blueprint(batches.batches_bp, url_prefix='/api/batches')
@@ -27,8 +29,12 @@ def create_app():
     app.register_blueprint(financial.financial_bp, url_prefix='/api/financial')
     app.register_blueprint(pest.pest_bp, url_prefix='/api/pest')
     app.register_blueprint(tasks.tasks_bp, url_prefix='/api/tasks')
+    app.register_blueprint(actuators.actuators_bp, url_prefix='/api/actuators')
+    app.register_blueprint(tank.tank_bp, url_prefix='/api/tank')
+    app.register_blueprint(sensors.sensors_bp, url_prefix='/api/sensors')
+    app.register_blueprint(weather.weather_bp, url_prefix='/api/weather')
 
-    # Stubs (still active for: sensors, weather, tank, actuators, alerts, dashboard)
+    # Stubs — only /alerts and /dashboard remain
     app.register_blueprint(stubs.stubs_bp, url_prefix='/api')
 
     return app

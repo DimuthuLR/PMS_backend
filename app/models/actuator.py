@@ -3,16 +3,16 @@ from datetime import datetime
 
 class Actuator(db.Model):
     __tablename__ = 'actuators'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    type = db.Column(db.String(20), default='valve')  # valve, pump
-    zone = db.Column(db.String(50))
-    status = db.Column(db.String(10), default='off')  # on, off
-    mode = db.Column(db.String(10), default='manual') # manual, auto
-    auto_threshold = db.Column(db.Integer, default=40) # for valves
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+    type = db.Column(db.String(30), default='valve')       # 'valve' or 'pump'
+    zone = db.Column(db.String(60))                        # e.g., "Zone A"
+    status = db.Column(db.String(10), default='off')       # 'on' or 'off'
+    mode = db.Column(db.String(10), default='manual')      # 'manual' or 'auto'
+    auto_threshold = db.Column(db.Float, default=30.0)     # Soil moisture % below which to activate
+    last_toggled = db.Column(db.DateTime, default=datetime.utcnow)
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -21,6 +21,6 @@ class Actuator(db.Model):
             'zone': self.zone,
             'status': self.status,
             'mode': self.mode,
-            'autoThreshold': self.auto_threshold,
-            'createdAt': self.created_at.isoformat() if self.created_at else None
+            'auto_threshold': self.auto_threshold,
+            'last_toggled': self.last_toggled.isoformat() if self.last_toggled else None,
         }

@@ -6,3 +6,7 @@ from .harvest import Harvest
 from .financial import Financial
 from .pest import Pest
 from .task import Task
+from .actuator import Actuator
+from .tank import Tank
+from .sensor import Sensor
+from .weather import Weather

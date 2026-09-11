@@ -1,43 +1,47 @@
 from flask import Blueprint, request, jsonify
-from ..models import Tank
+from ..models.tank import Tank
 from .. import db
 from ..utils.auth import token_required
+from ..services.sensor_simulation import get_or_create_weather
 
 tank_bp = Blueprint('tank', __name__)
 
 @tank_bp.route('', methods=['GET'])
 @token_required
-def get_tank():
+def get_tank(current_user):
     tank = Tank.query.first()
     if not tank:
-        # Create default if none exists
-        tank = Tank(level=65, capacity=1000, pump_status='off', auto_mode=True, low_level_threshold=20, fill_level_threshold=80)
+        tank = Tank(level=500.0, capacity=1000.0)
         db.session.add(tank)
         db.session.commit()
     return jsonify(tank.to_dict()), 200
 
 @tank_bp.route('', methods=['PUT'])
 @token_required
-def update_tank():
+def update_tank(current_user):
     tank = Tank.query.first()
     if not tank:
-        return jsonify({'error': 'Tank not found'}), 404
+        tank = Tank()
+        db.session.add(tank)
+
     data = request.get_json()
     tank.level = data.get('level', tank.level)
     tank.capacity = data.get('capacity', tank.capacity)
-    tank.pump_status = data.get('pumpStatus', tank.pump_status)
-    tank.auto_mode = data.get('autoMode', tank.auto_mode)
-    tank.low_level_threshold = data.get('lowLevelThreshold', tank.low_level_threshold)
-    tank.fill_level_threshold = data.get('fillLevelThreshold', tank.fill_level_threshold)
+    tank.pump_status = data.get('pump_status', tank.pump_status)
+    tank.auto_mode = data.get('auto_mode', tank.auto_mode)
+    tank.low_level_threshold = data.get('low_level_threshold', tank.low_level_threshold)
+    tank.fill_level_threshold = data.get('fill_level_threshold', tank.fill_level_threshold)
+
     db.session.commit()
     return jsonify(tank.to_dict()), 200
 
 @tank_bp.route('/toggle-pump', methods=['POST'])
 @token_required
-def toggle_pump():
+def toggle_pump(current_user):
     tank = Tank.query.first()
     if not tank:
-        return jsonify({'error': 'Tank not found'}), 404
-    tank.pump_status = 'on' if tank.pump_status == 'off' else 'off'
+        return jsonify({'message': 'Tank not initialized'}), 404
+
+    tank.pump_status = 'off' if tank.pump_status == 'on' else 'on'
     db.session.commit()
     return jsonify(tank.to_dict()), 200

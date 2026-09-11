@@ -6,4 +6,8 @@ from .harvest import harvest_bp
 from .financial import financial_bp
 from .pest import pest_bp
 from .tasks import tasks_bp
+from .actuators import actuators_bp
+from .tank import tank_bp
+from .sensors import sensors_bp
+from .weather import weather_bp
 from .stubs import stubs_bp
