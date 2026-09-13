@@ -3,11 +3,11 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
 from .config import Config
+from .socketio import socketio  # ✅ import the socket instance
 
 # Initialize extensions
 db = SQLAlchemy()
 migrate = Migrate()
-
 
 def create_app():
     app = Flask(__name__)
@@ -16,11 +16,13 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     CORS(app)
+    socketio.init_app(app)  # ✅ attach socket to app
 
+    # Register blueprints
     from .routes import (auth, plots, batches, care, harvest,
                          financial, pest, tasks,
                          actuators, tank, sensors, weather,
-                         alerts, dashboard, users)
+                         alerts, dashboard)
 
     app.register_blueprint(auth.auth_bp, url_prefix='/api/auth')
     app.register_blueprint(plots.plots_bp, url_prefix='/api/plots')
@@ -36,6 +38,8 @@ def create_app():
     app.register_blueprint(weather.weather_bp, url_prefix='/api/weather')
     app.register_blueprint(alerts.alerts_bp, url_prefix='/api/alerts')
     app.register_blueprint(dashboard.dashboard_bp, url_prefix='/api/dashboard')
-    app.register_blueprint(users.users_bp, url_prefix='/api/users')
+
+    # Register socket event handlers
+    from . import socket_events  # noqa: F401  (registers @socketio.on handlers)
 
     return app
