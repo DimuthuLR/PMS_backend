@@ -12,3 +12,4 @@ from .sensors import sensors_bp
 from .weather import weather_bp
 from .alerts import alerts_bp
 from .dashboard import dashboard_bp
+from .users import users_bp
