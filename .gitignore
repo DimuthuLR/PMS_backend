@@ -3,3 +3,5 @@ node_modules/
 .DS_Store
 dist/
 build/
+*.sh text eol=lf
+.env.production
