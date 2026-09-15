@@ -10,8 +10,8 @@ users_bp = Blueprint('users', __name__)
 @token_required
 @admin_required
 def get_users(current_user):
-    """List all users (admin only)"""
-    users = User.query.order_by(User.id).all()
+    """List all users (admin only)."""
+    users = User.query.order_by(User.created_at.desc()).all()
     return jsonify([u.to_dict() for u in users]), 200
 
 
@@ -29,25 +29,28 @@ def get_user(current_user, user_id):
 @token_required
 @admin_required
 def create_user(current_user):
-    """Create a new user (admin only)"""
+    """Create a new user (admin only)."""
     data = request.get_json()
 
     if not data.get('username'):
         return jsonify({'message': 'username is required'}), 400
+    if not data.get('email'):
+        return jsonify({'message': 'email is required'}), 400
     if not data.get('password'):
         return jsonify({'message': 'password is required'}), 400
 
     if User.query.filter_by(username=data['username']).first():
         return jsonify({'message': 'Username already exists'}), 400
-    if data.get('email') and User.query.filter_by(email=data['email']).first():
+    if User.query.filter_by(email=data['email']).first():
         return jsonify({'message': 'Email already exists'}), 400
 
     user = User(
         username=data['username'],
-        email=data.get('email', f"{data['username']}@local"),
+        email=data['email'],
         role=data.get('role', 'user'),
     )
     user.set_password(data['password'])
+
     db.session.add(user)
     db.session.commit()
     return jsonify(user.to_dict()), 201
@@ -57,24 +60,24 @@ def create_user(current_user):
 @token_required
 @admin_required
 def update_user(current_user, user_id):
-    """Update user (admin only). Password optional."""
     user = User.query.get(user_id)
     if not user:
         return jsonify({'message': 'User not found'}), 404
 
     data = request.get_json()
 
-    if data.get('username') and data['username'] != user.username:
+    # Check unique constraints before updating
+    if 'username' in data and data['username'] != user.username:
         if User.query.filter_by(username=data['username']).first():
-            return jsonify({'message': 'Username already taken'}), 400
+            return jsonify({'message': 'Username already exists'}), 400
         user.username = data['username']
 
-    if data.get('email') and data['email'] != user.email:
+    if 'email' in data and data['email'] != user.email:
         if User.query.filter_by(email=data['email']).first():
-            return jsonify({'message': 'Email already taken'}), 400
+            return jsonify({'message': 'Email already exists'}), 400
         user.email = data['email']
 
-    if data.get('role'):
+    if 'role' in data:
         user.role = data['role']
 
     if data.get('password'):
@@ -88,7 +91,7 @@ def update_user(current_user, user_id):
 @token_required
 @admin_required
 def delete_user(current_user, user_id):
-    """Delete user (admin only). Cannot delete yourself."""
+    # Prevent self-deletion
     if current_user.id == user_id:
         return jsonify({'message': 'You cannot delete your own account'}), 400
 
@@ -98,4 +101,4 @@ def delete_user(current_user, user_id):
 
     db.session.delete(user)
     db.session.commit()
-    return jsonify({'message': 'User deleted'}), 200
+    return jsonify({'message': 'User deleted successfully'}), 200

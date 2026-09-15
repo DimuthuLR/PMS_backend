@@ -16,13 +16,13 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     CORS(app)
-    socketio.init_app(app)  # ✅ attach socket to app
+    socketio.init_app(app)
 
     # Register blueprints
     from .routes import (auth, plots, batches, care, harvest,
                          financial, pest, tasks,
                          actuators, tank, sensors, weather,
-                         alerts, dashboard)
+                         alerts, dashboard, users)          # ✅ add users
 
     app.register_blueprint(auth.auth_bp, url_prefix='/api/auth')
     app.register_blueprint(plots.plots_bp, url_prefix='/api/plots')
@@ -38,8 +38,9 @@ def create_app():
     app.register_blueprint(weather.weather_bp, url_prefix='/api/weather')
     app.register_blueprint(alerts.alerts_bp, url_prefix='/api/alerts')
     app.register_blueprint(dashboard.dashboard_bp, url_prefix='/api/dashboard')
+    app.register_blueprint(users.users_bp, url_prefix='/api/users')  # ✅ NEW
 
     # Register socket event handlers
-    from . import socket_events  # noqa: F401  (registers @socketio.on handlers)
+    from . import socket_events  # noqa: F401
 
     return app

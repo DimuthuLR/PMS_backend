@@ -1,8 +1,11 @@
 import random
+import json
 from datetime import datetime
 from ..models.sensor import Sensor
 from ..models.weather import Weather
 from .. import db
+from ..socketio import socketio  # ✅
+
 
 def simulate_sensor_reading(previous=None):
     """Generate a new sensor reading (random walk from previous values)."""
@@ -15,7 +18,6 @@ def simulate_sensor_reading(previous=None):
         hum = random.uniform(45, 75)
         moisture = random.uniform(35, 60)
 
-    # Clamp to realistic ranges
     temp = max(10, min(45, temp))
     hum = max(20, min(95, hum))
     moisture = max(10, min(90, moisture))
@@ -26,8 +28,8 @@ def simulate_sensor_reading(previous=None):
         'soil_moisture': round(moisture, 2),
     }
 
+
 def get_or_create_sensor():
-    """Return the singleton Sensor row, creating one if it doesn't exist."""
     sensor = Sensor.query.first()
     if not sensor:
         data = simulate_sensor_reading()
@@ -36,8 +38,8 @@ def get_or_create_sensor():
         db.session.commit()
     return sensor
 
+
 def get_or_create_weather():
-    """Return the singleton Weather row, creating one with mock data if needed."""
     weather = Weather.query.first()
     if not weather:
         weather = Weather(
@@ -51,9 +53,9 @@ def get_or_create_weather():
         db.session.commit()
     return weather
 
+
 def generate_forecast(days=5):
     """Generate a 5-day mock forecast (returns JSON string)."""
-    import json
     conditions = ['Sunny', 'Cloudy', 'Rainy', 'Partly Cloudy', 'Stormy']
     forecast = []
     for i in range(days):
@@ -65,3 +67,13 @@ def generate_forecast(days=5):
             'rain_chance': random.randint(0, 100),
         })
     return json.dumps(forecast)
+
+
+def emit_sensor_update(sensor):
+    """Broadcast a sensor update to all connected clients."""
+    socketio.emit('sensor:update', sensor.to_dict())
+
+
+def emit_dashboard_refresh(reason='data changed'):
+    """Nudge all dashboards to refetch."""
+    socketio.emit('dashboard:refresh', {'reason': reason})

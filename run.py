@@ -9,5 +9,6 @@ if __name__ == '__main__':
         host='0.0.0.0',
         port=5000,
         debug=True,
-        allow_unsafe_werkzeug=True,  # dev only
+        use_reloader=False,        # ✅ disable the reloader
+        allow_unsafe_werkzeug=True,
     )

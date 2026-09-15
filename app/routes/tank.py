@@ -2,9 +2,10 @@ from flask import Blueprint, request, jsonify
 from ..models.tank import Tank
 from .. import db
 from ..utils.auth import token_required
-from ..services.sensor_simulation import get_or_create_weather
+from ..socketio import socketio
 
 tank_bp = Blueprint('tank', __name__)
+
 
 @tank_bp.route('', methods=['GET'])
 @token_required
@@ -15,6 +16,7 @@ def get_tank(current_user):
         db.session.add(tank)
         db.session.commit()
     return jsonify(tank.to_dict()), 200
+
 
 @tank_bp.route('', methods=['PUT'])
 @token_required
@@ -33,7 +35,12 @@ def update_tank(current_user):
     tank.fill_level_threshold = data.get('fill_level_threshold', tank.fill_level_threshold)
 
     db.session.commit()
+
+    socketio.emit('tank:update', tank.to_dict())
+    socketio.emit('dashboard:refresh', {'reason': 'tank updated'})
+
     return jsonify(tank.to_dict()), 200
+
 
 @tank_bp.route('/toggle-pump', methods=['POST'])
 @token_required
@@ -44,4 +51,8 @@ def toggle_pump(current_user):
 
     tank.pump_status = 'off' if tank.pump_status == 'on' else 'on'
     db.session.commit()
+
+    socketio.emit('tank:update', tank.to_dict())
+    socketio.emit('dashboard:refresh', {'reason': 'pump toggled'})
+
     return jsonify(tank.to_dict()), 200

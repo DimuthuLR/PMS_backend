@@ -3,15 +3,18 @@ from ..models.actuator import Actuator
 from .. import db
 from ..utils.auth import token_required
 from ..services.irrigation import run_auto_irrigation
+from ..socketio import socketio
 from datetime import datetime
 
 actuators_bp = Blueprint('actuators', __name__)
+
 
 @actuators_bp.route('', methods=['GET'])
 @token_required
 def get_actuators(current_user):
     items = Actuator.query.all()
     return jsonify([a.to_dict() for a in items]), 200
+
 
 @actuators_bp.route('/<int:actuator_id>', methods=['GET'])
 @token_required
@@ -20,6 +23,7 @@ def get_actuator(current_user, actuator_id):
     if not item:
         return jsonify({'message': 'Actuator not found'}), 404
     return jsonify(item.to_dict()), 200
+
 
 @actuators_bp.route('', methods=['POST'])
 @token_required
@@ -38,7 +42,12 @@ def create_actuator(current_user):
     )
     db.session.add(item)
     db.session.commit()
+
+    socketio.emit('actuator:created', item.to_dict())
+    socketio.emit('dashboard:refresh', {'reason': 'actuator created'})
+
     return jsonify(item.to_dict()), 201
+
 
 @actuators_bp.route('/<int:actuator_id>', methods=['PUT'])
 @token_required
@@ -56,7 +65,12 @@ def update_actuator(current_user, actuator_id):
     item.auto_threshold = data.get('auto_threshold', item.auto_threshold)
 
     db.session.commit()
+
+    socketio.emit('actuator:updated', item.to_dict())
+    socketio.emit('dashboard:refresh', {'reason': 'actuator updated'})
+
     return jsonify(item.to_dict()), 200
+
 
 @actuators_bp.route('/<int:actuator_id>', methods=['DELETE'])
 @token_required
@@ -66,12 +80,16 @@ def delete_actuator(current_user, actuator_id):
         return jsonify({'message': 'Actuator not found'}), 404
     db.session.delete(item)
     db.session.commit()
+
+    socketio.emit('actuator:deleted', {'id': actuator_id})
+    socketio.emit('dashboard:refresh', {'reason': 'actuator deleted'})
+
     return jsonify({'message': 'Actuator deleted'}), 200
+
 
 @actuators_bp.route('/<int:actuator_id>/toggle', methods=['POST'])
 @token_required
 def toggle_actuator(current_user, actuator_id):
-    """Toggle actuator ON <-> OFF"""
     item = Actuator.query.get(actuator_id)
     if not item:
         return jsonify({'message': 'Actuator not found'}), 404
@@ -79,11 +97,21 @@ def toggle_actuator(current_user, actuator_id):
     item.status = 'off' if item.status == 'on' else 'on'
     item.last_toggled = datetime.utcnow()
     db.session.commit()
+
+    # ✅ Emit the toggle event
+    socketio.emit('actuator:toggled', item.to_dict())
+    socketio.emit('dashboard:refresh', {'reason': 'actuator toggled'})
+
     return jsonify(item.to_dict()), 200
+
 
 @actuators_bp.route('/run-auto', methods=['POST'])
 @token_required
 def run_auto(current_user):
-    """Run auto-irrigation logic (admin/manager only in future)."""
     result = run_auto_irrigation()
+
+    # ✅ Notify clients that actuators may have changed
+    socketio.emit('irrigation:ran', result)
+    socketio.emit('dashboard:refresh', {'reason': 'auto-irrigation ran'})
+
     return jsonify(result), 200
